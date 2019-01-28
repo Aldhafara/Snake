@@ -1,5 +1,8 @@
 package com.noCompany.snake;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -14,13 +17,17 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private String path = "src" + File.separator + "main" + File.separator + "resources" + File.separator;
     private int step;
     private Point[] position = new Point[750];
+
     private Random random = new Random();
 
-    private int width,height;
+    private int width, height;
+    private int gamefieldWidth, gamefieldHeight;
 
     private boolean pause = false;
 
-    private Point enemyPosition = new Point((random.nextInt(34) + 1) * 25, (random.nextInt(21) + 3) * 25);
+    private Point size;
+
+    private Point enemyPosition;
 
     private Direction direction;
     private Direction lastDirection;
@@ -28,21 +35,33 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private ImageIcon snakeFace;
     private ImageIcon enemyImage = new ImageIcon(path + "apple.png");
 
-    private int length = 3;
-    private int moves = 0;
-    private int score = 0;
+    private int length;
+    private int moves, scorePerLevel, scorePerGame, maxScore = 0;
 
     private Timer timer;
     private int delay = 437;
     private int level = 1;
 
     private ImageIcon body = new ImageIcon(path + "body.png");
+    private ImageIcon tail = new ImageIcon(path + "tail.png");
+    private ImageIcon tail2 = new ImageIcon(path + "tail2.png");
     private ImageIcon titleImage = new ImageIcon(path + "title.png");
 
-    Gameplay(int wwidth, int wheight) {
+    private int X, Y;
+    private boolean playFanfare = false;
 
-        width=wwidth;
-        height=wheight;
+    Gameplay(Point Size, int wWidth, int wHeight, int gfwidth, int gfheight, int Step) {
+
+        size = Size;
+        width = wWidth;
+        height = wHeight;
+        gamefieldWidth = gfwidth;
+        gamefieldHeight = gfheight;
+        step = Step;
+
+        initialPropertiesOfSnake();
+
+        enemyPosition = randPosition();
 
         addKeyListener(this);
         setFocusable(true);
@@ -56,128 +75,167 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
 
 
         if (moves == 0) {
-            snakeFace = new ImageIcon(path + "mr.png");
-            step = snakeFace.getIconWidth();
-
-            position[0] = new Point(4 * step, 4 * step);
-            position[1] = new Point(3 * step, 4 * step);
-            position[2] = new Point(2 * step, 4 * step);
-
+            initialPropertiesOfSnake();
             snakeFace.paintIcon(this, g, position[0].x, position[0].y);
         }
 
         //NAGŁÓWEK
         g.setColor(Color.WHITE);
-        g.drawRect(24, 10, 851, 55);
+        g.drawRect(24, 10, gamefieldWidth + 1, 55);
+        g.setColor(new Color(162, 183, 56));
+        g.fillRect(25, 11, gamefieldWidth, 54);
 
-        titleImage.paintIcon(this, g, 25, 11);
-
-        //'liczniki'
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("arial", Font.BOLD, 12));
-        g.drawString("SCORE:  " + score, 780, 30);
-        g.drawString("LENGTH: " + length, 780, 50);
-        g.drawString("LEVEL:  " + level, 60, 30);
-        g.drawString("Delay:  " + delay, 60, 50);
+        if (gamefieldWidth >= 360) {
+            titleImage.paintIcon(this, g, 25 + (gamefieldWidth - titleImage.getIconWidth()) / 2, 11);
+        }
 
         //POLE GRY
         g.setColor(Color.WHITE);
-        g.drawRect(step - 1, 3 * step - 1, 851, 23 * step + 1);
-
-        //g.setColor(new Color(159, 197, 68));
+        g.drawRect(step - 1, 3 * step - 1, gamefieldWidth + 1, gamefieldHeight + 1);
         g.setColor(new Color(184, 203, 87));
-        g.fillRect(step, 3 * step, 850, 23 * step);
+        X = step;
+        Y = 3 * step;
+        g.fillRect(X, Y, gamefieldWidth, gamefieldHeight);
 
+        if ((enemyPosition.x == position[0].x) && (enemyPosition.y == position[0].y)) {
+            scorePerLevel++;
+            scorePerGame++;
+            if (scorePerGame > maxScore)
+                maxScore = scorePerGame;
+            length++;
 
+            if (length == ((gamefieldHeight * gamefieldWidth) / (step * step))) {
+                delay = (int) (delay / 1.5);
+                level++;
+                length = 3;
+                moves = 0;
+                scorePerLevel = 0;
+                direction = Direction.RIGHT;
+                initialPropertiesOfSnake();
+            }
+
+            enemyPosition = randPosition();
+        }
 
         for (int i = 0; i < length; i++) {
 
-            if ((i == 0 && direction == Direction.RIGHT) || (i == 0 && direction == null)) {
-                snakeFace = new ImageIcon(path + "mr.png");
-                snakeFace.paintIcon(this, g, position[i].x, position[i].y);
-            }
-            if (i == 0 && direction == Direction.LEFT) {
-                snakeFace = new ImageIcon(path + "ml.png");
-                snakeFace.paintIcon(this, g, position[i].x, position[i].y);
-            }
-            if (i == 0 && direction == Direction.UP) {
-                snakeFace = new ImageIcon(path + "mu.png");
-                snakeFace.paintIcon(this, g, position[i].x, position[i].y);
-            }
-            if (i == 0 && direction == Direction.DOWN) {
-                snakeFace = new ImageIcon(path + "md.png");
+            if (i == 0) {
+                if ((direction == Direction.RIGHT) || (direction == null))
+                    snakeFace = new ImageIcon(path + "mr.png");
+                if (direction == Direction.LEFT)
+                    snakeFace = new ImageIcon(path + "ml.png");
+                if (direction == Direction.UP)
+                    snakeFace = new ImageIcon(path + "mu.png");
+                if (direction == Direction.DOWN)
+                    snakeFace = new ImageIcon(path + "md.png");
+
                 snakeFace.paintIcon(this, g, position[i].x, position[i].y);
             }
 
-            if (i != 0) {
+            if (i == length - 1) {
+                tail2.paintIcon(this, g, position[i].x, position[i].y);
+            }
+            if (i == length - 2) {
+                tail.paintIcon(this, g, position[i].x, position[i].y);
+            }
+            if (i != 0 && i < length - 2) {
                 body.paintIcon(this, g, position[i].x, position[i].y);
             }
 
         }
 
+        //'liczniki'
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("arial", Font.BOLD, 12));
+        g.drawString("SCORE:  " + scorePerLevel, gamefieldWidth - 70, 30);
+        g.drawString("LENGTH: " + length, gamefieldWidth - 70, 50);
+        g.drawString("LEVEL:  " + level, 60, 30);
+        g.drawString("RECORD:  " + maxScore, 60, 50);
 
-        if ((enemyPosition.x == position[0].x) && (enemyPosition.y == position[0].y)) {
-            score ++;
-            length++;
-            enemyPosition = randPosition();
-
-
-            //if (score % 20 == 0 && score != 0){
-            if (score == 779){
-                delay = (int) (delay/1.5);
-                level++;
-            }
-        }
         enemyImage.paintIcon(this, g, enemyPosition.x, enemyPosition.y);
+
+        g.setColor(Color.GRAY);
 
         for (int i = 1; i < length; i++) {
             if ((position[0].x == position[i].x) && (position[0].y == position[i].y)) {
                 direction = null;
 
-                g.setColor(Color.WHITE);
-                g.setFont(new Font("arial", Font.BOLD, 50));
-                g.drawString("GAME OVER", 300, 300);
+                Font font = new Font("arial", Font.BOLD, 50);
+                g.setFont(font);
+                drawCenteredString(g, "GAME OVER", gamefieldWidth, gamefieldHeight, font, -45);
 
-                g.setFont(new Font("arial", Font.BOLD, 20));
-                g.drawString("Press ENTER to RESTART", 350, 320);
+                font = new Font("arial", Font.BOLD, 20);
+                g.setFont(font);
+                drawCenteredString(g, "Press ENTER to RESTART", gamefieldWidth, gamefieldHeight, font, 5);
+
+                //TODO wait until the user presses ENTER
             }
         }
 
         if (pause) {
-            g.setColor(Color.WHITE);
+            Font font = new Font("arial", Font.BOLD, 50);
+            g.setFont(font);
+            drawCenteredString(g, "PAUSE", gamefieldWidth, gamefieldHeight, font, -45);
 
-            //drawCenteredString(g, "Tekst w środku", , );
+            font = new Font("arial", Font.BOLD, 20);
+            g.setFont(font);
+            drawCenteredString(g, "Press SPACE to unpause", gamefieldWidth, gamefieldHeight, font, 5);
 
-            g.setFont(new Font("arial", Font.BOLD, 50));
-            g.drawString("PAUSE", 300, 300);
-
-            g.setFont(new Font("arial", Font.BOLD, 20));
-            g.drawString("Press SPACE", 350, 350);
-
+            //TODO wait until the user presses SPACE
         }
 
-        if (level==9){
+        if (level == 9) {
             direction = null;
 
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("arial", Font.BOLD, 50));
-            g.drawString("YOU BEAT THE GAME", 300, 300);
+            Font font = new Font("arial", Font.BOLD, 50);
+            g.setFont(font);
+            drawCenteredString(g, "YOU BEAT THE GAME", gamefieldWidth, gamefieldHeight, font, -45);
 
-            g.setFont(new Font("arial", Font.BOLD, 20));
-            g.drawString("YOUR SCORE IS " + score, 350, 320);
-            g.drawString("Press ENTER to try again", 300, 340);
+            font = new Font("arial", Font.BOLD, 20);
+            g.setFont(font);
+            drawCenteredString(g, "YOUR SCORE IS " + scorePerGame, gamefieldWidth, gamefieldHeight, font, 5);
+            drawCenteredString(g, "Press ENTER to try again", gamefieldWidth, gamefieldHeight, font, 25);
+
+            pause = true;
+            playTune();
+
+            //TODO wait until the user presses ENTER
         }
 
         g.dispose();
     }
 
-    public void drawCenteredString(Graphics g, String text, Rectangle rect, Font font) {
+    private void playTune() {
+
+        Thread thread = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    Clip clip = AudioSystem.getClip();
+                    AudioInputStream inputStream = AudioSystem.getAudioInputStream(
+                            new File(path+"fanfare.wav"));
+                    clip.open(inputStream);
+                    clip.start();
+                    playFanfare=true;
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        });
+        if (!playFanfare)
+            thread.start();
+        while (thread.isAlive())
+            pause=true;
+
+        pause = false;
+    }
+
+    private void drawCenteredString(Graphics g, String text, int rectangleWidth, int rectangleHeight, Font font, int yShift) {
         // Get the FontMetrics
         FontMetrics metrics = g.getFontMetrics(font);
         // Determine the X coordinate for the text
-        int x = rect.x + (rect.width - metrics.stringWidth(text)) / 2;
+        int x = X + (rectangleWidth - metrics.stringWidth(text)) / 2;
         // Determine the Y coordinate for the text (note we add the ascent, as in java 2d 0 is top of the screen)
-        int y = rect.y + ((rect.height - metrics.getHeight()) / 2) + metrics.getAscent();
+        int y = Y + ((rectangleHeight - metrics.getHeight()) / 2) + metrics.getAscent() + yShift;
         // Set the font
         g.setFont(font);
         // Draw the String
@@ -185,13 +243,29 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     }
 
     private Point randPosition() {
-        Point point = new Point((random.nextInt(34) + 1) * 25, (random.nextInt(21) + 3) * 25);
+        Point point = new Point((random.nextInt(size.x) + 1) * step, (random.nextInt((size.y)) + 3) * step);
 
-        for (int i = 0; i <length ; i++) {
-            if (point.x==position[i].x && point.y==position[i].y)
-                point= randPosition();
+        for (int i = 0; i < length; i++) {
+            if (point.x == position[i].x && point.y == position[i].y)
+                point = randPosition();
         }
         return point;
+    }
+
+    private void initialPropertiesOfSnake() {
+
+        snakeFace = new ImageIcon(path + "mr.png");
+        if (size.y == 1) {
+            position[0] = new Point(4 * step, 3 * step);
+            position[1] = new Point(3 * step, 3 * step);
+            position[2] = new Point(2 * step, 3 * step);
+            length = 3;
+        } else {
+            position[0] = new Point(4 * step, 4 * step);
+            position[1] = new Point(3 * step, 4 * step);
+            position[2] = new Point(2 * step, 4 * step);
+            length = 3;
+        }
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -213,7 +287,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                     }
 
 
-                    if (position[i].x > 850) {            // Co się stanie gdy wąż dotrze do prawej krawędzi?
+                    if (position[i].x > gamefieldWidth) {            // Co się stanie gdy wąż dotrze do prawej krawędzi?
                         position[i].x = step;             // Pojawi się z lewej strony
                     }
                 }
@@ -231,7 +305,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                     }
 
                     if (position[i].x < step) {           // Co się stanie gdy wąż dotrze do lewej krawędzi?
-                        position[i].x = 850;              // Pojawi się z prawej strony
+                        position[i].x = gamefieldWidth;              // Pojawi się z prawej strony
                     }
                 }
             }
@@ -247,7 +321,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                         position[i].y = position[i - 1].y;
                     }
 
-                    if (position[i].y > 625) {            // Co się stanie gdy wąż dotrze do dolnej krawędzi?
+                    if (position[i].y > gamefieldHeight + 50) {            // Co się stanie gdy wąż dotrze do dolnej krawędzi?
                         position[i].y = step * 3;         // Pojawi się z góry
                     }
                 }
@@ -264,9 +338,10 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                         position[i].y = position[i - 1].y;
                     }
                     if (position[i].y < 3 * step) {      // Co się stanie gdy wąż dotrze do górnej krawędzi?
-                        position[i].y = 625;             // Pojawi się z dołu
+                        position[i].y = gamefieldHeight + 50;             // Pojawi się z dołu
                     }
                 }
+
             }
         }
         repaint();
@@ -290,36 +365,40 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         }
 
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            length = 3;
+            initialPropertiesOfSnake();
             moves = 0;
-            score = 0;
+            scorePerLevel = 0;
+            scorePerGame = 0;
             delay = 437;
             level = 1;
-            snakeFace = new ImageIcon(path + "mr.png");
             direction = Direction.RIGHT;
         }
 
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT)
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_D)
             if (direction != Direction.LEFT) {
                 moves++;
+                lastDirection = direction;
                 direction = Direction.RIGHT;
                 //System.out.println("->   "+"\u2192");
             }
-        if (e.getKeyCode() == KeyEvent.VK_LEFT)
+        if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_A)
             if (direction != Direction.RIGHT) {
                 moves++;
+                lastDirection = direction;
                 direction = Direction.LEFT;
                 //System.out.println("<-   "+"\u2190");
             }
-        if (e.getKeyCode() == KeyEvent.VK_UP)
+        if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W)
             if (direction != Direction.DOWN) {
                 moves++;
+                lastDirection = direction;
                 direction = Direction.UP;
                 //System.out.println(" /\\   "+"\u2191");
             }
-        if (e.getKeyCode() == KeyEvent.VK_DOWN)
+        if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S)
             if (direction != Direction.UP) {
                 moves++;
+                lastDirection = direction;
                 direction = Direction.DOWN;
                 //System.out.println(" \\/   "+"\u2193");
             }
