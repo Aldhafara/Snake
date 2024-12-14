@@ -38,7 +38,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private final ImageIcon titleImage = new ImageIcon(path + "title.png");
     private boolean pause = false;
     private Point enemyPosition;
-    private Direction direction;
+    private Direction direction = Direction.RIGHT;
     private Direction lastDirection;
     private ImageIcon snakeFace;
     private int length;
@@ -379,7 +379,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     public void keyReleased(KeyEvent e) {
     }
 
-    private Direction opposite(Direction dir) {
+    public Direction opposite(Direction dir) {
         return switch (dir) {
             case RIGHT -> Direction.LEFT;
             case LEFT -> Direction.RIGHT;
