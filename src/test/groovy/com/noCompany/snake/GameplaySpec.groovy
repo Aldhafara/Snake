@@ -10,8 +10,10 @@ class GameplaySpec extends Specification {
     Gameplay gameplay
 
     def setup() {
-        def size = new Point(9, 9)
-        gameplay = new Gameplay(size, 500, 500, 300, 300, 10)
+        def gridDimension = new Dimension(9, 9)
+        def window = new Rectangle( 500, 300)
+        def gameField = new Rectangle( 300, 10)
+        gameplay = new Gameplay(gridDimension, 10, window, gameField)
     }
 
     def "should initialize snake with default properties"() {
@@ -93,10 +95,10 @@ class GameplaySpec extends Specification {
             def gameplay = gameplay
 
         when:
-            def enemyPosition = gameplay.randPosition()
+            def enemyPosition = gameplay.getNewTargetPosition()
 
         then:
-            !(0..<gameplay.length).any { gameplay.position[it].equals(enemyPosition) }
+            !(0..<gameplay.length).any { gameplay.snake[it].equals(enemyPosition) }
     }
 
     static def event(int keyEvent) {
