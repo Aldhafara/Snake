@@ -227,11 +227,11 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     }
 
     private void drawSoreBoard(Graphics g) {
-        drawRectangle(g, new Color(162, 183, 56), new Rectangle(OUTSIDE_BORDER_WIDTH, OUTSIDE_BORDER_WIDTH, gameField.width, 75));
+        drawRectangle(g, new Color(162, 183, 56), new Rectangle(OUTSIDE_BORDER_WIDTH, OUTSIDE_BORDER_WIDTH, gameField.width, 125));
     }
 
     private void drawTitleBox(Graphics g) {
-        if (gameField.width >= 360) {
+        if (gameField.width >= 374) {
             TITLE_IMAGE.paintIcon(this, g, (width - TITLE_IMAGE.getIconWidth()) / 2, gameFieldVerticalDisplacement - TITLE_IMAGE.getIconHeight() - 15);
         }
     }
