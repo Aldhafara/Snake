@@ -21,7 +21,7 @@ class GameplaySpec extends Specification {
             def gameplay = gameplay
 
         expect:
-            gameplay.length == 4
+            gameplay.snake.size() == 3
             gameplay.direction == Direction.RIGHT
             gameplay.moves == 0
             gameplay.scorePerLevel == 0
@@ -93,14 +93,11 @@ class GameplaySpec extends Specification {
     }
 
     def "should generate random enemy position not overlapping snake"() {
-        given:
-            def gameplay = gameplay
-
         when:
             def enemyPosition = gameplay.getNewTargetPosition()
 
         then:
-            !(0..<gameplay.length).any { gameplay.snakeDeprecated[it].equals(enemyPosition) }
+            !gameplay.snake.find { it == enemyPosition }
     }
 
     static def event(int keyEvent) {
