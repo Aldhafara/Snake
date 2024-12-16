@@ -51,9 +51,11 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private final int width;
     private final int height;
     private boolean pause = false;
+    private boolean gameOver = false;
     private Point targetPosition;
     private Direction direction = Direction.RIGHT;
-    private Direction lastDirection;
+    private Direction lastDirectionTyped;
+    private Direction lastDirectionExecuted;
     private ImageIcon snakeFace;
     private int length;
     private int moves, scorePerLevel, scorePerGame, maxScore = 0;
@@ -131,6 +133,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         for (int i = 1; i < length; i++) {
             if ((snake[0].x == snake[i].x) && (snake[0].y == snake[i].y)) {
                 drawEndGameMessage(g);
+                gameOver = true;
             }
         }
 
@@ -139,6 +142,11 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         }
         if (level == MAX_LEVEL) {
             drawEndMessage(g);
+
+            direction = null;
+            pause = true;
+            gameOver = true;
+            playTune();
         }
 
         g.dispose();
@@ -156,13 +164,9 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         font = new Font("arial", Font.BOLD, 20);
         g.setFont(font);
         drawCenteredString(g, "Press SPACE to unpause", gameFieldWidth, gameFieldHeight, font, 5);
-
-        //TODO wait until the user presses SPACE
     }
 
     private void drawEndMessage(Graphics g) {
-        direction = null;
-
         Font font = new Font("arial", Font.BOLD, 50);
         g.setFont(font);
         drawCenteredString(g, "YOU BEAT THE GAME", gameFieldWidth, gameFieldHeight, font, -45);
@@ -171,11 +175,6 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         g.setFont(font);
         drawCenteredString(g, "YOUR SCORE IS " + scorePerGame, gameFieldWidth, gameFieldHeight, font, 5);
         drawCenteredString(g, "Press ENTER to try again", gameFieldWidth, gameFieldHeight, font, 25);
-
-        pause = true;
-        playTune();
-
-        //TODO wait until the user presses ENTER
     }
 
     private void drawEndGameMessage(Graphics g) {
@@ -207,6 +206,8 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                         default -> snakeFace = new ImageIcon(PATH + "mr.png");
                     }
                 }
+                lastDirectionExecuted = lastDirectionTyped;
+
 
                 drawSnakeBodyPart(g, snakeFace, snake[i]);
             }
@@ -401,13 +402,16 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     }
 
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_P && !pause) {
-            pause = true;
-            lastDirection = direction;
-        } else if (e.getKeyCode() == KeyEvent.VK_SPACE && pause) {
-            pause = false;
-            direction = lastDirection;
-        } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        if (e.getKeyCode() == KeyEvent.VK_P || e.getKeyCode() == KeyEvent.VK_SPACE) {
+            if (pause) {
+                direction = lastDirectionTyped;
+                pause = false;
+            } else {
+                lastDirectionTyped = direction;
+                pause = true;
+            }
+        }
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && gameOver) {
             initializeSnake();
             moves = 0;
             scorePerLevel = 0;
@@ -415,11 +419,12 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             delay = 437;
             level = 1;
             direction = Direction.RIGHT;
+            gameOver = false;
         } else {
             Direction newDirection = keyDirectionMap.get(e.getKeyCode());
-            if (newDirection != null && direction != opposite(newDirection)) {
+            if (newDirection != null && direction != opposite(newDirection) && !pause) {
                 moves++;
-                lastDirection = direction;
+                lastDirectionTyped = direction;
                 direction = newDirection;
                 logger.debug("Direction changed to: {}", direction);
             }
