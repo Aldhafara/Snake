@@ -59,7 +59,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private Direction lastDirectionTyped;
     private Direction lastDirectionExecuted;
     private ImageIcon snakeFace = new ImageIcon(PATH + "mr.png");
-    private int length;
+    private int length = 3;
     private int moves, scorePerLevel, scorePerGame, maxScore = 0;
     private int delay = 437;
     private int level = 1;
@@ -306,17 +306,8 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     }
 
     private void initializeSnake() {
-
-        if (playingFieldDimensions.height == 1) {
-            snake[0] = new Point(4, 0);
-            snake[1] = new Point(3, 0);
-            snake[2] = new Point(2, 0);
-            length = 3;
-        } else {
-            snake[0] = new Point(4, 1);
-            snake[1] = new Point(3, 1);
-            snake[2] = new Point(2, 1);
-            length = 3;
+        for (int i = 0; i < length; i++) {
+            snake[i] = new Point(4 - i ,playingFieldDimensions.height == 1 ? 0 : 1);
         }
     }
 
@@ -412,6 +403,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             }
         }
         if (e.getKeyCode() == KeyEvent.VK_ENTER && gameOver) {
+            length = 3;
             initializeSnake();
             moves = 0;
             scorePerLevel = 0;
