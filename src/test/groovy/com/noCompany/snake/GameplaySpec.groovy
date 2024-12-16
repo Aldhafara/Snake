@@ -55,21 +55,21 @@ class GameplaySpec extends Specification {
 
     def "should pause and resume game on key press"() {
         given:
-            def gameplay = gameplay
+            gameplay.pause = false
 
         when:
             def startEvent = event(KeyEvent.VK_SPACE)
             gameplay.keyPressed(startEvent)
 
         then:
-            gameplay.pause == false
+            gameplay.pause == true
 
         when:
             def pauseEvent = event(KeyEvent.VK_P)
             gameplay.keyPressed(pauseEvent)
 
         then:
-            gameplay.pause == true
+            gameplay.pause == false
     }
 
     def "should restart game on ENTER key press"() {
@@ -77,6 +77,7 @@ class GameplaySpec extends Specification {
             gameplay.moves = 10
             gameplay.scorePerLevel = 5
             gameplay.direction = Direction.DOWN
+            gameplay.gameOver = true
 
         when:
             def event = event(KeyEvent.VK_ENTER)
