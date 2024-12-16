@@ -13,7 +13,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
 
@@ -24,9 +24,11 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private final static String PATH = "src" + File.separator + "main" + File.separator + "resources" + File.separator;
     private final static int GRID_SIZE = new ImageIcon(PATH + "body.png").getIconWidth();
     private final static int MAX_LEVEL = 9;
+    private final static int STARTING_LENGTH = 4;
     private final int OUTSIDE_BORDER_WIDTH;
-    private final Point[] snake = new Point[750];
-    private final ArrayList<Point> newSnake = new ArrayList<>();
+    @Deprecated
+    private final Point[] snakeDeprecated = new Point[750];
+    private final LinkedList<Point> snake = new LinkedList<>();
 
     private final Random random = new Random();
     private final int gameFieldWidth;
@@ -52,14 +54,14 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     );
     private final int width;
     private final int height;
-    private boolean pause = false;
+    private boolean pause = true;
     private boolean gameOver = false;
     private Point targetPosition;
     private Direction direction = Direction.RIGHT;
     private Direction lastDirectionTyped;
     private Direction lastDirectionExecuted;
     private ImageIcon snakeFace = new ImageIcon(PATH + "mr.png");
-    private int length = 3;
+    private int length = STARTING_LENGTH;
     private int moves, scorePerLevel, scorePerGame, maxScore = 0;
     private int delay = 437;
     private int level = 1;
@@ -92,7 +94,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
 
         if (moves == 0) {
             initializeSnake();
-            drawSnakeBodyPart(g, snakeFace, snake[0]);
+            drawSnakeBodyPart(g, snakeFace, snakeDeprecated[0]);
         }
 
         drawSoreBoard(g);
@@ -111,7 +113,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             if (length == ((gameFieldHeight * gameFieldWidth) / (GRID_SIZE * GRID_SIZE))) {
                 delay = (int) (delay / 1.5);
                 level++;
-                length = 3;
+                length = STARTING_LENGTH;
                 moves = 0;
                 scorePerLevel = 0;
                 direction = Direction.RIGHT;
@@ -131,7 +133,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         g.setColor(Color.GRAY);
 
         for (int i = 1; i < length; i++) {
-            if ((snake[0].x == snake[i].x) && (snake[0].y == snake[i].y)) {
+            if ((snakeDeprecated[0].x == snakeDeprecated[i].x) && (snakeDeprecated[0].y == snakeDeprecated[i].y)) {
                 drawEndGameMessage(g);
                 gameOver = true;
             }
@@ -153,7 +155,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     }
 
     private boolean targetReached() {
-        return (targetPosition.x == snake[0].x) && (targetPosition.y == snake[0].y);
+        return (targetPosition.x == snakeDeprecated[0].x) && (targetPosition.y == snakeDeprecated[0].y);
     }
 
     private void drawPauseMessage(Graphics g) {
@@ -208,17 +210,17 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                 }
                 lastDirectionExecuted = lastDirectionTyped;
 
-                drawSnakeBodyPart(g, snakeFace, snake[i]);
+                drawSnakeBodyPart(g, snakeFace, snakeDeprecated[i]);
             }
 
             if (i == length - 1) {
-                drawSnakeBodyPart(g, tailEnd, snake[i]);
+                drawSnakeBodyPart(g, tailEnd, snakeDeprecated[i]);
             }
             if (i == length - 2) {
-                drawSnakeBodyPart(g, tailMiddle, snake[i]);
+                drawSnakeBodyPart(g, tailMiddle, snakeDeprecated[i]);
             }
             if (i != 0 && i < length - 2) {
-                drawSnakeBodyPart(g, body, snake[i]);
+                drawSnakeBodyPart(g, body, snakeDeprecated[i]);
             }
         }
     }
@@ -296,7 +298,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         Point point = new Point((random.nextInt(playingFieldDimensions.width) + 1), (random.nextInt((playingFieldDimensions.height)) ));
 
         for (int i = 0; i < length; i++) {
-            if (point.x == snake[i].x && point.y == snake[i].y) {
+            if (point.x == snakeDeprecated[i].x && point.y == snakeDeprecated[i].y) {
                 point = getNewTargetPosition();
             }
         }
@@ -305,7 +307,10 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
 
     private void initializeSnake() {
         for (int i = 0; i < length; i++) {
-            snake[i] = new Point(4 - i ,playingFieldDimensions.height == 1 ? 0 : 1);
+            snakeDeprecated[i] = new Point(4 - i ,playingFieldDimensions.height == 1 ? 0 : 1);
+            if (snake.size() < STARTING_LENGTH) {
+                snake.add(new Point(2 + i ,playingFieldDimensions.height == 1 ? 0 : 1));
+            }
         }
     }
 
@@ -319,67 +324,114 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             if (direction == Direction.RIGHT) {
                 for (int i = length; i >= 0; i--) {
                     if (i == length)
-                        snake[i] = new Point(snake[i - 1].x, snake[i - 1].y);
+                        snakeDeprecated[i] = new Point(snakeDeprecated[i - 1].x, snakeDeprecated[i - 1].y);
                     else if (i == 0)
-                        snake[i].x = snake[i].x + 1;
+                        snakeDeprecated[i].x = snakeDeprecated[i].x + 1;
                     else {
-                        snake[i].x = snake[i - 1].x;
-                        snake[i].y = snake[i - 1].y;
+                        snakeDeprecated[i].x = snakeDeprecated[i - 1].x;
+                        snakeDeprecated[i].y = snakeDeprecated[i - 1].y;
                     }
 
-                    if (snake[i].x > gameFieldWidth/GRID_SIZE) {          // Co się stanie gdy wąż dotrze do prawej krawędzi?
-                        snake[i].x = 1;                                   // Pojawi się z lewej strony
+                    if (snakeDeprecated[i].x > gameFieldWidth/GRID_SIZE) {          // Co się stanie gdy wąż dotrze do prawej krawędzi?
+                        snakeDeprecated[i].x = 1;                                   // Pojawi się z lewej strony
                     }
+                }
+
+                int possibleX = snake.getLast().x + 1;
+                if (possibleX > gameFieldWidth/GRID_SIZE) {
+                    possibleX = 1;
+                }
+                Point nextStep = new Point(possibleX, snake.getLast().y);
+                if (!snake.contains(nextStep)) {
+                    snake.add(nextStep);
+                    snake.removeFirst();
+                } else {
+                    System.out.println("BITE!");
                 }
             }
 
             if (direction == Direction.LEFT) {
                 for (int i = length; i >= 0; i--) {
                     if (i == length)
-                        snake[i] = new Point(snake[i - 1].x, snake[i - 1].y);
+                        snakeDeprecated[i] = new Point(snakeDeprecated[i - 1].x, snakeDeprecated[i - 1].y);
                     else if (i == 0)
-                        snake[i].x = snake[i].x - 1;
+                        snakeDeprecated[i].x = snakeDeprecated[i].x - 1;
                     else {
-                        snake[i].x = snake[i - 1].x;
-                        snake[i].y = snake[i - 1].y;
+                        snakeDeprecated[i].x = snakeDeprecated[i - 1].x;
+                        snakeDeprecated[i].y = snakeDeprecated[i - 1].y;
                     }
 
-                    if (snake[i].x < 1) {                                 // Co się stanie gdy wąż dotrze do lewej krawędzi?
-                        snake[i].x = gameFieldWidth/GRID_SIZE;            // Pojawi się z prawej strony
+                    if (snakeDeprecated[i].x < 1) {                                 // Co się stanie gdy wąż dotrze do lewej krawędzi?
+                        snakeDeprecated[i].x = gameFieldWidth/GRID_SIZE;            // Pojawi się z prawej strony
                     }
+                }
+
+                int possibleX = snake.getLast().x - 1;
+                if (possibleX < 1) {
+                    possibleX = gameFieldWidth/GRID_SIZE;
+                }
+                Point nextStep = new Point(possibleX, snake.getLast().y);
+                if (!snake.contains(nextStep)) {
+                    snake.add(nextStep);
+                    snake.removeFirst();
+                } else {
+                    System.out.println("BITE!");
                 }
             }
 
             if (direction == Direction.DOWN) {
                 for (int i = length; i >= 0; i--) {
                     if (i == length)
-                        snake[i] = new Point(snake[i - 1].x, snake[i - 1].y);
+                        snakeDeprecated[i] = new Point(snakeDeprecated[i - 1].x, snakeDeprecated[i - 1].y);
                     else if (i == 0)
-                        snake[i].y = snake[i].y + 1;
+                        snakeDeprecated[i].y = snakeDeprecated[i].y + 1;
                     else {
-                        snake[i].x = snake[i - 1].x;
-                        snake[i].y = snake[i - 1].y;
+                        snakeDeprecated[i].x = snakeDeprecated[i - 1].x;
+                        snakeDeprecated[i].y = snakeDeprecated[i - 1].y;
                     }
 
-                    if (snake[i].y > playingFieldDimensions.height - 1) { // Co się stanie gdy wąż dotrze do dolnej krawędzi?
-                        snake[i].y = 0;                                   // Pojawi się z góry
+                    if (snakeDeprecated[i].y > playingFieldDimensions.height - 1) { // Co się stanie gdy wąż dotrze do dolnej krawędzi?
+                        snakeDeprecated[i].y = 0;                                   // Pojawi się z góry
                     }
+                }
+                int possibleY = snake.getLast().y + 1;
+                if (possibleY > playingFieldDimensions.height - 1) {
+                    possibleY = 0;
+                }
+                Point nextStep = new Point(snake.getLast().x, possibleY);
+                if (!snake.contains(nextStep)) {
+                    snake.add(nextStep);
+                    snake.removeFirst();
+                } else {
+                    System.out.println("BITE!");
                 }
             }
 
             if (direction == Direction.UP) {
                 for (int i = length; i >= 0; i--) {
                     if (i == length)
-                        snake[i] = new Point(snake[i - 1].x, snake[i - 1].y);
+                        snakeDeprecated[i] = new Point(snakeDeprecated[i - 1].x, snakeDeprecated[i - 1].y);
                     else if (i == 0)
-                        snake[i].y = snake[i].y - 1;
+                        snakeDeprecated[i].y = snakeDeprecated[i].y - 1;
                     else {
-                        snake[i].x = snake[i - 1].x;
-                        snake[i].y = snake[i - 1].y;
+                        snakeDeprecated[i].x = snakeDeprecated[i - 1].x;
+                        snakeDeprecated[i].y = snakeDeprecated[i - 1].y;
                     }
-                    if (snake[i].y < 0) {                                 // Co się stanie gdy wąż dotrze do górnej krawędzi?
-                        snake[i].y = playingFieldDimensions.height - 1;   // Pojawi się z dołu
+                    if (snakeDeprecated[i].y < 0) {                                 // Co się stanie gdy wąż dotrze do górnej krawędzi?
+                        snakeDeprecated[i].y = playingFieldDimensions.height - 1;   // Pojawi się z dołu
                     }
+                }
+
+                int possibleY = snake.getLast().y - 1;
+                if (possibleY < 0) {
+                    possibleY = playingFieldDimensions.height - 1;
+                }
+                Point nextStep = new Point(snake.getLast().x, possibleY);
+                if (!snake.contains(nextStep)) {
+                    snake.add(nextStep);
+                    snake.removeFirst();
+                } else {
+                    System.out.println("BITE!");
                 }
 
             }
@@ -401,7 +453,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             }
         }
         if (e.getKeyCode() == KeyEvent.VK_ENTER && gameOver) {
-            length = 3;
+            length = STARTING_LENGTH;
             initializeSnake();
             moves = 0;
             scorePerLevel = 0;

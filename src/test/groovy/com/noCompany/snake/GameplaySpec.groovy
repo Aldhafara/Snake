@@ -21,7 +21,7 @@ class GameplaySpec extends Specification {
             def gameplay = gameplay
 
         expect:
-            gameplay.length == 3
+            gameplay.length == 4
             gameplay.direction == Direction.RIGHT
             gameplay.moves == 0
             gameplay.scorePerLevel == 0
@@ -31,6 +31,7 @@ class GameplaySpec extends Specification {
     def "should change direction on valid key press"() {
         given:
             def gameplay = gameplay
+            gameplay.pause = false
 
         when:
             def event = event(KeyEvent.VK_W)
@@ -99,7 +100,7 @@ class GameplaySpec extends Specification {
             def enemyPosition = gameplay.getNewTargetPosition()
 
         then:
-            !(0..<gameplay.length).any { gameplay.snake[it].equals(enemyPosition) }
+            !(0..<gameplay.length).any { gameplay.snakeDeprecated[it].equals(enemyPosition) }
     }
 
     static def event(int keyEvent) {
