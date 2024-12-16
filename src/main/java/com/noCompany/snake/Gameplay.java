@@ -63,7 +63,6 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private int moves, scorePerLevel, scorePerGame, maxScore = 0;
     private int delay = 437;
     private int level = 1;
-    private int X, Y;
     private boolean playFanfare = false;
 
     public Gameplay(Dimension gridDimension, int titleBarHeight, Rectangle window, Rectangle gameField) {
@@ -100,8 +99,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         drawTitleBox(g);
         drawGameField(g);
 
-        X = GRID_SIZE;
-        Y = 3 * GRID_SIZE;
+
 
         if (targetReached()) {
             if (scorePerGame > maxScore) {
@@ -287,8 +285,8 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
 
     private void drawCenteredString(Graphics g, String text, int rectangleWidth, int rectangleHeight, Font font, int yShift) {
         FontMetrics metrics = g.getFontMetrics(font);
-        int textPositionX = X + (rectangleWidth - metrics.stringWidth(text)) / 2;
-        int textPositionY = Y + ((rectangleHeight - metrics.getHeight()) / 2) + metrics.getAscent() + yShift;
+        int textPositionX = GRID_SIZE + (rectangleWidth - metrics.stringWidth(text)) / 2;
+        int textPositionY = 3 * GRID_SIZE + ((rectangleHeight - metrics.getHeight()) / 2) + metrics.getAscent() + yShift;
 
         g.setFont(font);
         g.drawString(text, textPositionX, textPositionY);
