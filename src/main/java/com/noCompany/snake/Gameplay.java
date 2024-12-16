@@ -13,6 +13,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Random;
 
@@ -25,6 +26,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private final static int MAX_LEVEL = 9;
     private final int OUTSIDE_BORDER_WIDTH;
     private final Point[] snake = new Point[750];
+    private final ArrayList<Point> newSnake = new ArrayList<>();
 
     private final Random random = new Random();
     private final int gameFieldWidth;
@@ -56,7 +58,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private Direction direction = Direction.RIGHT;
     private Direction lastDirectionTyped;
     private Direction lastDirectionExecuted;
-    private ImageIcon snakeFace;
+    private ImageIcon snakeFace = new ImageIcon(PATH + "mr.png");
     private int length;
     private int moves, scorePerLevel, scorePerGame, maxScore = 0;
     private int delay = 437;
@@ -208,7 +210,6 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                 }
                 lastDirectionExecuted = lastDirectionTyped;
 
-
                 drawSnakeBodyPart(g, snakeFace, snake[i]);
             }
 
@@ -225,7 +226,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     }
 
     private void drawSnakeBodyPart(Graphics g, ImageIcon imageIcon, Point position) {
-        imageIcon.paintIcon(this, g, position.x, position.y + 35);
+        imageIcon.paintIcon(this, g, position.x * GRID_SIZE, position.y * GRID_SIZE + gameFieldVerticalDisplacement);
     }
 
     private void drawGameField(Graphics g) {
@@ -294,7 +295,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     }
 
     private Point getNewTargetPosition() {
-        Point point = new Point((random.nextInt(playingFieldDimensions.width) + 1) * GRID_SIZE, (random.nextInt((playingFieldDimensions.height)) + 3) * GRID_SIZE);
+        Point point = new Point((random.nextInt(playingFieldDimensions.width) + 1), (random.nextInt((playingFieldDimensions.height)) ));
 
         for (int i = 0; i < length; i++) {
             if (point.x == snake[i].x && point.y == snake[i].y) {
@@ -306,16 +307,15 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
 
     private void initializeSnake() {
 
-        snakeFace = new ImageIcon(PATH + "mr.png");
         if (playingFieldDimensions.height == 1) {
-            snake[0] = new Point(4 * GRID_SIZE, 3 * GRID_SIZE);
-            snake[1] = new Point(3 * GRID_SIZE, 3 * GRID_SIZE);
-            snake[2] = new Point(2 * GRID_SIZE, 3 * GRID_SIZE);
+            snake[0] = new Point(4, 0);
+            snake[1] = new Point(3, 0);
+            snake[2] = new Point(2, 0);
             length = 3;
         } else {
-            snake[0] = new Point(4 * GRID_SIZE, 4 * GRID_SIZE);
-            snake[1] = new Point(3 * GRID_SIZE, 4 * GRID_SIZE);
-            snake[2] = new Point(2 * GRID_SIZE, 4 * GRID_SIZE);
+            snake[0] = new Point(4, 1);
+            snake[1] = new Point(3, 1);
+            snake[2] = new Point(2, 1);
             length = 3;
         }
     }
@@ -332,14 +332,14 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                     if (i == length)
                         snake[i] = new Point(snake[i - 1].x, snake[i - 1].y);
                     else if (i == 0)
-                        snake[i].x = snake[i].x + GRID_SIZE;
+                        snake[i].x = snake[i].x + 1;
                     else {
                         snake[i].x = snake[i - 1].x;
                         snake[i].y = snake[i - 1].y;
                     }
 
-                    if (snake[i].x > gameFieldWidth) {             // Co się stanie gdy wąż dotrze do prawej krawędzi?
-                        snake[i].x = GRID_SIZE;             // Pojawi się z lewej strony
+                    if (snake[i].x > gameFieldWidth/GRID_SIZE) {          // Co się stanie gdy wąż dotrze do prawej krawędzi?
+                        snake[i].x = 1;                                   // Pojawi się z lewej strony
                     }
                 }
             }
@@ -349,14 +349,14 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                     if (i == length)
                         snake[i] = new Point(snake[i - 1].x, snake[i - 1].y);
                     else if (i == 0)
-                        snake[i].x = snake[i].x - GRID_SIZE;
+                        snake[i].x = snake[i].x - 1;
                     else {
                         snake[i].x = snake[i - 1].x;
                         snake[i].y = snake[i - 1].y;
                     }
 
-                    if (snake[i].x < GRID_SIZE) {           // Co się stanie gdy wąż dotrze do lewej krawędzi?
-                        snake[i].x = gameFieldWidth;               // Pojawi się z prawej strony
+                    if (snake[i].x < 1) {                                 // Co się stanie gdy wąż dotrze do lewej krawędzi?
+                        snake[i].x = gameFieldWidth/GRID_SIZE;            // Pojawi się z prawej strony
                     }
                 }
             }
@@ -366,14 +366,14 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                     if (i == length)
                         snake[i] = new Point(snake[i - 1].x, snake[i - 1].y);
                     else if (i == 0)
-                        snake[i].y = snake[i].y + GRID_SIZE;
+                        snake[i].y = snake[i].y + 1;
                     else {
                         snake[i].x = snake[i - 1].x;
                         snake[i].y = snake[i - 1].y;
                     }
 
-                    if (snake[i].y > gameFieldHeight + 50) {       // Co się stanie gdy wąż dotrze do dolnej krawędzi?
-                        snake[i].y = GRID_SIZE * 3;         // Pojawi się z góry
+                    if (snake[i].y > playingFieldDimensions.height - 1) { // Co się stanie gdy wąż dotrze do dolnej krawędzi?
+                        snake[i].y = 0;                                   // Pojawi się z góry
                     }
                 }
             }
@@ -383,13 +383,13 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
                     if (i == length)
                         snake[i] = new Point(snake[i - 1].x, snake[i - 1].y);
                     else if (i == 0)
-                        snake[i].y = snake[i].y - GRID_SIZE;
+                        snake[i].y = snake[i].y - 1;
                     else {
                         snake[i].x = snake[i - 1].x;
                         snake[i].y = snake[i - 1].y;
                     }
-                    if (snake[i].y < 3 * GRID_SIZE) {       // Co się stanie gdy wąż dotrze do górnej krawędzi?
-                        snake[i].y = gameFieldHeight + 50;         // Pojawi się z dołu
+                    if (snake[i].y < 0) {                                 // Co się stanie gdy wąż dotrze do górnej krawędzi?
+                        snake[i].y = playingFieldDimensions.height - 1;   // Pojawi się z dołu
                     }
                 }
 
