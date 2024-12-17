@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Gameplay extends JPanel implements KeyListener, ActionListener {
 
@@ -62,7 +63,7 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private int moves, scorePerLevel, scorePerGame, maxScore = 0;
     private int delay = 437;
     private int level = 1;
-    private boolean playFanfare = false;
+    private final AtomicBoolean fanfareIsPlaying = new AtomicBoolean(false);
 
     public Gameplay(Dimension gridDimension, int titleBarHeight, Rectangle window, Rectangle gameField) {
         this.titleBarHeight = titleBarHeight;
@@ -269,22 +270,29 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     }
 
     private void playTune() {
+        if (!fanfareIsPlaying.compareAndSet(false, true)) {
+            return;
+        }
 
-        Thread thread = new Thread(() -> {
+        new Thread(() -> {
             try {
                 Clip clip = AudioSystem.getClip();
-                AudioInputStream inputStream = AudioSystem.getAudioInputStream(
-                        new File(PATH + "fanfare.wav"));
+                AudioInputStream inputStream = AudioSystem.getAudioInputStream(new File(PATH + "fanfare.wav"));
+
                 clip.open(inputStream);
                 clip.start();
-                playFanfare = true;
+                do {
+                    Thread.sleep(100);
+                } while (clip.isRunning());
+
+                clip.close();
+                inputStream.close();
             } catch (Exception e) {
-                logger.error(e.getMessage());
+                logger.error("Error playing tune: {}", e.getMessage());
+            } finally {
+                fanfareIsPlaying.set(false);
             }
-        });
-        if (!playFanfare) {
-            thread.start();
-        }
+        }).start();
     }
 
     private Point getNewTargetPosition() {
@@ -377,7 +385,6 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         gameOver = false;
         biteHimself = false;
         pause = true;
-        playFanfare = false;
     }
 
     private void togglePause() {
