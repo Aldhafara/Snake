@@ -3,6 +3,7 @@ package com.noCompany.snake
 import spock.lang.Specification
 
 import java.awt.*
+import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 
 class GameplaySpec extends Specification {
@@ -14,6 +15,7 @@ class GameplaySpec extends Specification {
         def window = new Rectangle( 500, 300)
         def gameField = new Rectangle( 300, 10)
         gameplay = new Gameplay(gridDimension, 10, window, gameField)
+        gameplay.delay = 1
     }
 
     def "should initialize snake with default properties"() {
@@ -36,6 +38,7 @@ class GameplaySpec extends Specification {
         when:
             def event = event(KeyEvent.VK_W)
             gameplay.keyPressed(event)
+            gameplay.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "keyPressed"))
 
         then:
             gameplay.direction == Direction.UP
@@ -45,13 +48,45 @@ class GameplaySpec extends Specification {
     def "should not allow opposite direction change"() {
         given:
             gameplay.direction = Direction.RIGHT
+            gameplay.pause = false
+            gameplay.delay = 10
 
         when:
-            def event = event(KeyEvent.VK_LEFT)
-            gameplay.keyPressed(event)
+            def firstEvent = event(KeyEvent.VK_UP)
+            gameplay.keyPressed(firstEvent)
+            gameplay.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "keyPressed"))
+
+            sleep(1)
+            def secondEvent = event(KeyEvent.VK_LEFT)
+            gameplay.keyPressed(secondEvent)
+            gameplay.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "keyPressed"))
+
 
         then:
-            gameplay.direction == Direction.RIGHT
+            gameplay.direction == Direction.UP
+            gameplay.moves == 1
+    }
+
+    def "should allow opposite direction change when intermediate steps are performed slower than the clock step"() {
+        given:
+            gameplay.direction = Direction.RIGHT
+            gameplay.pause = false
+            gameplay.delay = 1
+
+        when:
+            def firstEvent = event(KeyEvent.VK_UP)
+            gameplay.keyPressed(firstEvent)
+            gameplay.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "keyPressed"))
+
+            sleep(10)
+            def secondEvent = event(KeyEvent.VK_LEFT)
+            gameplay.keyPressed(secondEvent)
+            gameplay.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "keyPressed"))
+
+
+        then:
+            gameplay.direction == Direction.LEFT
+            gameplay.moves == 2
     }
 
     def "should pause and resume game on key press"() {
