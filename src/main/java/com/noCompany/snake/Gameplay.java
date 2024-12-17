@@ -144,37 +144,58 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         return (targetPosition.x == snake.getLast().x) && (targetPosition.y == snake.getLast().y);
     }
 
-    private void drawPauseMessage(Graphics g) {
-        Font font = new Font("arial", Font.BOLD, 50);
-        g.setFont(font);
-        drawCenteredString(g, "PAUSE", gameField.width, gameField.height, font, -45);
+    private void drawMessage(Graphics g, String[] messages, int[] offsets) {
+        if (messages.length != offsets.length) {
+            throw new IllegalArgumentException("Messages and offsets arrays must have the same length.");
+        }
 
-        font = new Font("arial", Font.BOLD, 20);
+        for (int i = 0; i < messages.length; i++) {
+            Font font = i == 0 ? new Font("arial", Font.BOLD, 50) : new Font("arial", Font.BOLD, 20);
+            g.setFont(font);
+            drawCenteredString(g, messages[i], gameField.width, gameField.height, font, offsets[i]);
+        }
+    }
+
+    private void drawCenteredString(Graphics g, String text, int rectangleWidth, int rectangleHeight, Font font, int yShift) {
+        FontMetrics metrics = g.getFontMetrics(font);
+        int textPositionX = GRID_SIZE + (rectangleWidth - metrics.stringWidth(text)) / 2;
+        int textPositionY = height / 3 + ((rectangleHeight - metrics.getHeight()) / 2) + metrics.getAscent() + yShift;
+
         g.setFont(font);
-        drawCenteredString(g, "Press SPACE to unpause", gameField.width, gameField.height, font, 5);
+        g.setColor(Color.BLACK);
+        int outlineSize = 2;
+        for (int dx = -outlineSize; dx <= outlineSize; dx++) {
+            for (int dy = -outlineSize; dy <= outlineSize; dy++) {
+                if (dx != 0 || dy != 0) {
+                    g.drawString(text, textPositionX + dx, textPositionY + dy);
+                }
+            }
+        }
+
+        g.setColor(Color.WHITE);
+        g.drawString(text, textPositionX, textPositionY);
+    }
+
+    private void drawPauseMessage(Graphics g) {
+        drawMessage(g,
+                new String[]{"PAUSE", "Press SPACE to unpause"},
+                new int[]{-45, 5}
+        );
     }
 
     private void drawEndMessage(Graphics g) {
-        Font font = new Font("arial", Font.BOLD, 50);
-        g.setFont(font);
-        drawCenteredString(g, "YOU BEAT THE GAME", gameField.width, gameField.height, font, -45);
-
-        font = new Font("arial", Font.BOLD, 20);
-        g.setFont(font);
-        drawCenteredString(g, "YOUR SCORE IS " + scorePerGame, gameField.width, gameField.height, font, 5);
-        drawCenteredString(g, "Press ENTER to try again", gameField.width, gameField.height, font, 25);
+        drawMessage(g,
+                new String[]{"YOU BEAT THE GAME", "YOUR SCORE IS " + scorePerGame, "Press ENTER to try again"},
+                new int[]{-45, 5, 25}
+        );
     }
 
     private void drawEndGameMessage(Graphics g) {
         direction = null;
-
-        Font font = new Font("arial", Font.BOLD, 50);
-        g.setFont(font);
-        drawCenteredString(g, "GAME OVER", gameField.width, gameField.height, font, -45);
-
-        font = new Font("arial", Font.BOLD, 20);
-        g.setFont(font);
-        drawCenteredString(g, "Press ENTER to RESTART", gameField.width, gameField.height, font, 5);
+        drawMessage(g,
+                new String[]{"GAME OVER", "Press ENTER to RESTART"},
+                new int[]{-45, 5}
+        );
     }
 
     private void drawSnake(Graphics g) {
@@ -264,15 +285,6 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         if (!playFanfare) {
             thread.start();
         }
-    }
-
-    private void drawCenteredString(Graphics g, String text, int rectangleWidth, int rectangleHeight, Font font, int yShift) {
-        FontMetrics metrics = g.getFontMetrics(font);
-        int textPositionX = GRID_SIZE + (rectangleWidth - metrics.stringWidth(text)) / 2;
-        int textPositionY = height / 3 + ((rectangleHeight - metrics.getHeight()) / 2) + metrics.getAscent() + yShift;
-
-        g.setFont(font);
-        g.drawString(text, textPositionX, textPositionY);
     }
 
     private Point getNewTargetPosition() {
